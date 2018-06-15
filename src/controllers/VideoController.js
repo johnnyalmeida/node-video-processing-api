@@ -2,9 +2,6 @@ import fs from 'fs';
 import AWS from 'aws-sdk';
 import ffmpeg from 'fluent-ffmpeg';
 import Logger from '../helpers/Logger';
-import { error } from 'util';
-
-// import UserService from '../services/UserService';
 
 class VideoController {
   constructor(config) {
