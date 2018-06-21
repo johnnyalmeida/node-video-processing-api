@@ -142,9 +142,42 @@ class VideoController {
     }
   }
 
-  moveVideoCover(filePath, fileName, res) {
+  moveVideoThumb(filePath, fileName, res) {
     try {
       console.log('uploading thumbs');
+      fs.readFile(filePath, async (err, data) => {
+        if (err) { throw err; }
+        const base64data = Buffer.from(data, 'binary');
+        const { bucket } = this.config.aws;
+        const key = `videos/thumbs/${fileName}`;
+
+        this.s3.putObject({
+          Bucket: bucket,
+          Key: key,
+          Body: base64data,
+        }, (e, result) => {
+          console.log('move');
+          if (e) {
+            this.postBack(fileName.replace('.jpg', ''), 'error');
+            Logger.throw(res, '2365958507', err);
+          }
+          const file = {
+            path: key,
+            s3: result,
+          };
+          console.log(file);
+          return file;
+        });
+      });
+    } catch (err) {
+      console.log(err);
+      // Logger.throw(res, '2365958507', err);
+    }
+  }
+
+  moveVideoCover(filePath, fileName, res) {
+    try {
+      console.log('uploading cover');
       fs.readFile(filePath, async (err, data) => {
         if (err) { throw err; }
         const base64data = Buffer.from(data, 'binary');
