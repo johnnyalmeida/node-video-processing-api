@@ -127,7 +127,7 @@ class VideoController {
           this.moveVideoCover(coverPath, coverName, res);
           this.moveProcessedFile(filePath, fileName, res);
         })
-        .inputOptions('transpose=1')
+        .inputOptions('-vf "transpose=1"')
         .screenshots({
           count: 1,
           folder: `${this.config.relative_temp_path}tmp/videos/covers`,
