@@ -35,7 +35,7 @@ class VideoController {
       const key = `videos/${fileName}.mp4`;
       let file;
       try {
-        file = fs.createWriteStream(`../tmp/videos/${fileName}.mp4`);
+        file = fs.createWriteStream(`${this.config.relative_temp_path}tmp/videos/${fileName}.mp4`);
       } catch (e) {
         console.log(e);
       }
@@ -53,9 +53,9 @@ class VideoController {
         .pipe(file)
         .on('finish', () => {
           console.log('start processing');
-          const filePath = `../tmp/videos/${fileName}.mp4`;
+          const filePath = `${this.config.relative_temp_path}tmp/videos/${fileName}.mp4`;
 
-          const newPath = `../tmp/videos/processed/${fileName}.mp4`;
+          const newPath = `${this.config.relative_temp_path}tmp/videos/processed/${fileName}.mp4`;
           try {
             ffmpeg(filePath)
               .audioCodec('aac')
@@ -87,7 +87,7 @@ class VideoController {
   }
 
   generateThumb(filePath, fileName, res) {
-    const thumbPath = `../tmp/videos/thumbs/${fileName}.jpg`;
+    const thumbPath = `${this.config.relative_temp_path}tmp/videos/covers/${fileName}.jpg`;
     const thumbName = `${fileName}.jpg`;
     try {
       ffmpeg(filePath)
@@ -97,13 +97,41 @@ class VideoController {
         .on('end', () => {
           console.log('Screenshots taken');
           this.moveVideoThumb(thumbPath, thumbName, res);
+          this.generateCover(filePath, fileName, res);
+        })
+        .screenshots({
+          count: 1,
+          folder: `${this.config.relative_temp_path}tmp/videos/covers`,
+          filename: thumbName,
+          size: '113x200',
+        })
+        .on('error', (err) => {
+          this.postBack(fileName, 'error');
+          console.log(err);
+        });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  generateCover(filePath, fileName, res) {
+    const coverPath = `${this.config.relative_temp_path}tmp/videos/covers/${fileName}.jpg`;
+    const coverName = `${fileName}.jpg`;
+    try {
+      ffmpeg(filePath)
+        .on('filenames', (filenames) => {
+          console.log(`Will generate ${filenames.join(', ')}`);
+        })
+        .on('end', () => {
+          console.log('Cover screenshots taken');
+          this.moveVideoCover(coverPath, coverName, res);
           this.moveProcessedFile(filePath, fileName, res);
         })
         .screenshots({
           count: 1,
-          folder: '../tmp/videos/thumbs',
-          filename: thumbName,
-          size: '113x200',
+          folder: `${this.config.relative_temp_path}tmp/videos/covers`,
+          filename: coverName,
+          size: '750x1334',
         })
         .on('error', (err) => {
           this.postBack(fileName, 'error');
@@ -121,7 +149,7 @@ class VideoController {
         if (err) { throw err; }
         const base64data = Buffer.from(data, 'binary');
         const { bucket } = this.config.aws;
-        const key = `videos/thumbs/${fileName}`;
+        const key = `videos/covers/${fileName}`;
 
         this.s3.putObject({
           Bucket: bucket,
@@ -184,7 +212,7 @@ class VideoController {
 
   processWithGif(key) {
     return new Promise((resolve, reject) => {
-      const file = fs.createWriteStream(`../tmp/videos/${key}`);
+      const file = fs.createWriteStream(`${this.config.relative_temp_path}tmp/videos/${key}`);
 
       const params = {
         Bucket: this.config.aws_bucket,
@@ -194,9 +222,9 @@ class VideoController {
       this.s3.getObject(params).createReadStream().pipe(file)
         .on('finish', () => {
           console.log('start processing');
-          const filePath = `../tmp/videos/${key}`;
+          const filePath = `${this.config.relative_temp_path}tmp/videos/${key}`;
 
-          const newPath = `../tmp/videos/processed/${key}`;
+          const newPath = `${this.config.relative_temp_path}tmp/videos/processed/${key}`;
 
           ffmpeg(filePath)
             .input('./_files/homer.gif')
