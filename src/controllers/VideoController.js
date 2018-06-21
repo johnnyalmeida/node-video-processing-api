@@ -119,7 +119,6 @@ class VideoController {
     const coverName = `${fileName}.jpg`;
     try {
       ffmpeg(filePath)
-        .inputOptions('-noautorotate')
         .on('filenames', (filenames) => {
           console.log(`Will generate ${filenames.join(', ')}`);
         })
