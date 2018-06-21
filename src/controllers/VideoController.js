@@ -1,6 +1,7 @@
 import fs from 'fs';
 import AWS from 'aws-sdk';
 import ffmpeg from 'fluent-ffmpeg';
+import request from 'request';
 import Logger from '../helpers/Logger';
 
 class VideoController {
@@ -67,6 +68,7 @@ class VideoController {
               .videoBitrate(3500)
               .fps(29.7)
               .on('error', (err) => {
+                this.postBack(fileName, 'error');
                 console.log(err);
               })
               .on('end', () => {
@@ -74,6 +76,7 @@ class VideoController {
                 console.log('moving');
               });
           } catch (e) {
+            this.postBack(fileName, 'error');
             console.log(e);
           }
         });
@@ -103,6 +106,7 @@ class VideoController {
           size: '113x200',
         })
         .on('error', (err) => {
+          this.postBack(fileName, 'error');
           console.log(err);
         });
     } catch (e) {
@@ -126,6 +130,7 @@ class VideoController {
         }, (e, result) => {
           console.log('move');
           if (e) {
+            this.postBack(fileName.replace('.jpg', ''), 'error');
             Logger.throw(res, '2365958507', err);
           }
           const file = {
@@ -159,17 +164,20 @@ class VideoController {
           console.log('move');
           if (e) {
             Logger.throw(res, '2365958507', err);
+            this.postBack(fileName, 'error');
           }
           const file = {
             path: key,
             s3: result,
           };
           console.log(file);
+          this.postBack(fileName, 'success');
           return file;
         });
       });
     } catch (err) {
       console.log(err);
+      this.postBack(fileName, 'error');
       // Logger.throw(res, '2365958507', err);
     }
   }
@@ -210,6 +218,24 @@ class VideoController {
             });
         });
     });
+  }
+
+  postBack(key, status) {
+    console.log('posting back to media api');
+    request.put(
+      `${this.config.media_share_api}/history/`,
+      {
+        json: { key, status },
+      },
+      (errRequest, response) => {
+        if (!errRequest && response.statusCode === 200) {
+          console.log(`posted back: ${key}`);
+        } else {
+          console.log(errRequest);
+          console.log(`error when posting back: ${key}`);
+        }
+      },
+    );
   }
 }
 
