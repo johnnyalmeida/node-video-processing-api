@@ -119,6 +119,7 @@ class VideoController {
     const coverName = `${fileName}.jpg`;
     try {
       ffmpeg(filePath)
+        .inputOptions('-noautorotate')
         .on('filenames', (filenames) => {
           console.log(`Will generate ${filenames.join(', ')}`);
         })
@@ -127,7 +128,6 @@ class VideoController {
           this.moveVideoCover(coverPath, coverName, res);
           this.moveProcessedFile(filePath, fileName, res);
         })
-        .inputOptions('-vf "transpose=1"')
         .screenshots({
           count: 1,
           folder: `${this.config.relative_temp_path}tmp/videos/covers`,
