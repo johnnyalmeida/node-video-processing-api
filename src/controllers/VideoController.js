@@ -142,7 +142,7 @@ class VideoController {
     }
   }
 
-  moveVideoThumb(filePath, fileName, res) {
+  moveVideoCover(filePath, fileName, res) {
     try {
       console.log('uploading thumbs');
       fs.readFile(filePath, async (err, data) => {
