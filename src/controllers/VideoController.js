@@ -35,7 +35,7 @@ class VideoController {
       const key = `videos/${fileName}.mp4`;
       let file;
       try {
-        file = fs.createWriteStream(`./tmp/videos/${fileName}.mp4`);
+        file = fs.createWriteStream(`../tmp/videos/${fileName}.mp4`);
       } catch (e) {
         console.log(e);
       }
@@ -53,9 +53,9 @@ class VideoController {
         .pipe(file)
         .on('finish', () => {
           console.log('start processing');
-          const filePath = `./tmp/videos/${fileName}.mp4`;
+          const filePath = `../tmp/videos/${fileName}.mp4`;
 
-          const newPath = `./tmp/videos/processed/${fileName}.mp4`;
+          const newPath = `../tmp/videos/processed/${fileName}.mp4`;
           try {
             ffmpeg(filePath)
               .audioCodec('aac')
@@ -87,7 +87,7 @@ class VideoController {
   }
 
   generateThumb(filePath, fileName, res) {
-    const thumbPath = `./tmp/videos/thumbs/${fileName}.jpg`;
+    const thumbPath = `../tmp/videos/thumbs/${fileName}.jpg`;
     const thumbName = `${fileName}.jpg`;
     try {
       ffmpeg(filePath)
@@ -101,7 +101,7 @@ class VideoController {
         })
         .screenshots({
           count: 1,
-          folder: './tmp/videos/thumbs',
+          folder: '../tmp/videos/thumbs',
           filename: thumbName,
           size: '113x200',
         })
@@ -184,7 +184,7 @@ class VideoController {
 
   processWithGif(key) {
     return new Promise((resolve, reject) => {
-      const file = fs.createWriteStream(`./tmp/videos/${key}`);
+      const file = fs.createWriteStream(`../tmp/videos/${key}`);
 
       const params = {
         Bucket: this.config.aws_bucket,
@@ -194,9 +194,9 @@ class VideoController {
       this.s3.getObject(params).createReadStream().pipe(file)
         .on('finish', () => {
           console.log('start processing');
-          const filePath = `./tmp/videos/${key}`;
+          const filePath = `../tmp/videos/${key}`;
 
-          const newPath = `./tmp/videos/processed/${key}`;
+          const newPath = `../tmp/videos/processed/${key}`;
 
           ffmpeg(filePath)
             .input('./_files/homer.gif')
