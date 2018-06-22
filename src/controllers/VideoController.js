@@ -67,12 +67,6 @@ class VideoController {
               .save(newPath)
               .videoBitrate(3500)
               .fps(29.7)
-              .screenshots({
-                count: 1,
-                folder: `${this.config.relative_temp_path}tmp/videos/covers`,
-                filename: `${fileName}.jpg`,
-                size: '750x1334',
-              })
               .on('error', (err) => {
                 this.postBack(fileName, 'error');
                 console.log(err);
@@ -93,7 +87,6 @@ class VideoController {
   }
 
   generateThumb(filePath, fileName, res) {
-    const coverPath = `${this.config.relative_temp_path}tmp/videos/covers/${fileName}.jpg`;
     const thumbPath = `${this.config.relative_temp_path}tmp/videos/thumbs/${fileName}.jpg`;
     const thumbName = `${fileName}.jpg`;
     try {
@@ -104,7 +97,7 @@ class VideoController {
         .on('end', () => {
           console.log('Screenshots taken');
           this.moveVideoThumb(thumbPath, thumbName, res);
-          this.moveVideoCover(coverPath, fileName, res);
+          this.generateCover(filePath, fileName, res);
         })
         .screenshots({
           count: 1,
