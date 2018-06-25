@@ -68,3 +68,5 @@ debug('load settings');
     debug(`Server started on port ${app.config.port}`);
   });
 })();
+
+export default app;
