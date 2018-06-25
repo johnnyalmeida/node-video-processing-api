@@ -29,32 +29,27 @@ class VideoController {
 
   processVideo(data, res) {
     try {
-      console.log(data);
-      console.log('process');
       const fileName = `${data.key}`;
       const key = `videos/${fileName}.mp4`;
       let file;
       try {
         file = fs.createWriteStream(`${this.config.relative_temp_path}tmp/videos/${fileName}.mp4`);
       } catch (e) {
-        console.log(e);
+        this.postBack(fileName, 'error');
       }
       const params = {
         Bucket: this.config.aws.bucket,
         Key: key,
       };
 
-      console.log(key);
-
       this.s3.getObject(params).createReadStream()
-        .on('error', (errS3) => {
-          console.log(errS3);
+        .on('error', (err) => {
+          this.postBack(fileName, 'error');
+          Logger.throw(res, '2365958507', err);
         })
         .pipe(file)
         .on('finish', () => {
-          console.log('start processing');
           const filePath = `${this.config.relative_temp_path}tmp/videos/${fileName}.mp4`;
-
           const newPath = `${this.config.relative_temp_path}tmp/videos/processed/${fileName}.mp4`;
           try {
             ffmpeg(filePath)
@@ -69,19 +64,17 @@ class VideoController {
               .fps(29.7)
               .on('error', (err) => {
                 this.postBack(fileName, 'error');
-                console.log(err);
+                Logger.throw(res, '2365958507', err);
               })
               .on('end', () => {
                 this.generateThumb(newPath, fileName);
-                console.log('moving');
               });
           } catch (e) {
             this.postBack(fileName, 'error');
-            console.log(e);
+            Logger.throw(res, '2365958507', e);
           }
         });
     } catch (err) {
-      console.log(err);
       Logger.throw(res, '2365958507', err);
     }
   }
@@ -90,27 +83,26 @@ class VideoController {
     const thumbPath = `${this.config.relative_temp_path}tmp/videos/thumbs/${fileName}.jpg`;
     const thumbName = `${fileName}.jpg`;
     try {
+      console.log('thumb');
       ffmpeg(filePath)
-        .on('filenames', (filenames) => {
-          console.log(`Will generate ${filenames.join(', ')}`);
-        })
         .on('end', () => {
-          console.log('Screenshots taken');
           this.moveVideoThumb(thumbPath, thumbName, res);
           this.generateCover(filePath, fileName, res);
         })
         .screenshots({
           count: 1,
+          timestamps: [0.1],
           folder: `${this.config.relative_temp_path}tmp/videos/thumbs`,
           filename: thumbName,
           size: '113x200',
         })
         .on('error', (err) => {
           this.postBack(fileName, 'error');
-          console.log(err);
+          Logger.throw(res, '2365958507', err);
         });
     } catch (e) {
-      console.log(e);
+      this.postBack(fileName, 'error');
+      Logger.throw(res, '2365958507', e);
     }
   }
 
@@ -119,32 +111,29 @@ class VideoController {
     const coverName = `${fileName}.jpg`;
     try {
       ffmpeg(filePath)
-        .on('filenames', (filenames) => {
-          console.log(`Will generate ${filenames.join(', ')}`);
-        })
         .on('end', () => {
-          console.log('Cover screenshots taken');
           this.moveVideoCover(coverPath, coverName, res);
           this.moveProcessedFile(filePath, fileName, res);
         })
         .screenshots({
           count: 1,
+          timestamps: [0.1],
           folder: `${this.config.relative_temp_path}tmp/videos/covers`,
           filename: coverName,
           size: '750x1334',
         })
         .on('error', (err) => {
           this.postBack(fileName, 'error');
-          console.log(err);
+          Logger.throw(res, '2365958507', err);
         });
     } catch (e) {
-      console.log(e);
+      this.postBack(fileName, 'error');
+      Logger.throw(res, '2365958507', e);
     }
   }
 
   moveVideoThumb(filePath, fileName, res) {
     try {
-      console.log('uploading thumbs');
       fs.readFile(filePath, async (err, data) => {
         if (err) { throw err; }
         const base64data = Buffer.from(data, 'binary');
@@ -156,7 +145,6 @@ class VideoController {
           Key: key,
           Body: base64data,
         }, (e, result) => {
-          console.log('move');
           if (e) {
             this.postBack(fileName.replace('.jpg', ''), 'error');
             Logger.throw(res, '2365958507', err);
@@ -165,19 +153,16 @@ class VideoController {
             path: key,
             s3: result,
           };
-          console.log(file);
           return file;
         });
       });
     } catch (err) {
-      console.log(err);
-      // Logger.throw(res, '2365958507', err);
+      Logger.throw(res, '2365958507', err);
     }
   }
 
   moveVideoCover(filePath, fileName, res) {
     try {
-      console.log('uploading cover');
       fs.readFile(filePath, async (err, data) => {
         if (err) { throw err; }
         const base64data = Buffer.from(data, 'binary');
@@ -189,7 +174,6 @@ class VideoController {
           Key: key,
           Body: base64data,
         }, (e, result) => {
-          console.log('move');
           if (e) {
             this.postBack(fileName.replace('.jpg', ''), 'error');
             Logger.throw(res, '2365958507', err);
@@ -198,19 +182,16 @@ class VideoController {
             path: key,
             s3: result,
           };
-          console.log(file);
           return file;
         });
       });
     } catch (err) {
-      console.log(err);
-      // Logger.throw(res, '2365958507', err);
+      Logger.throw(res, '2365958507', err);
     }
   }
 
   moveProcessedFile(filePath, fileName, res) {
     try {
-      console.log('reading');
       fs.readFile(filePath, async (err, data) => {
         if (err) { throw err; }
         const base64data = Buffer.from(data, 'binary');
@@ -222,7 +203,6 @@ class VideoController {
           Key: key,
           Body: base64data,
         }, (e, result) => {
-          console.log('move');
           if (e) {
             Logger.throw(res, '2365958507', err);
             this.postBack(fileName, 'error');
@@ -231,15 +211,13 @@ class VideoController {
             path: key,
             s3: result,
           };
-          console.log(file);
           this.postBack(fileName, 'success');
           return file;
         });
       });
     } catch (err) {
-      console.log(err);
       this.postBack(fileName, 'error');
-      // Logger.throw(res, '2365958507', err);
+      Logger.throw(res, '2365958507', err);
     }
   }
 
@@ -254,9 +232,7 @@ class VideoController {
 
       this.s3.getObject(params).createReadStream().pipe(file)
         .on('finish', () => {
-          console.log('start processing');
           const filePath = `${this.config.relative_temp_path}tmp/videos/${key}`;
-
           const newPath = `${this.config.relative_temp_path}tmp/videos/processed/${key}`;
 
           ffmpeg(filePath)
@@ -270,7 +246,6 @@ class VideoController {
             ])
             .save(newPath)
             .on('end', () => {
-              console.log('processed');
               this.moveTempToS3(newPath, key, resolve, reject)
                 .then((data) => {
                   resolve(data);
@@ -282,7 +257,6 @@ class VideoController {
   }
 
   postBack(key, status) {
-    console.log('posting back to media api');
     request.put(
       `${this.config.media_share_api}/history/`,
       {
@@ -290,11 +264,10 @@ class VideoController {
       },
       (errRequest, response) => {
         if (!errRequest && response.statusCode === 200) {
-          console.log(`posted back: ${key}`);
-        } else {
-          console.log(errRequest);
-          console.log(`error when posting back: ${key}`);
+          return true;
         }
+        Logger.throw(null, '2365958507', errRequest);
+        return false;
       },
     );
   }
