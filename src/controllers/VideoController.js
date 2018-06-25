@@ -83,7 +83,6 @@ class VideoController {
     const thumbPath = `${this.config.relative_temp_path}tmp/videos/thumbs/${fileName}.jpg`;
     const thumbName = `${fileName}.jpg`;
     try {
-      console.log('thumb');
       ffmpeg(filePath)
         .on('end', () => {
           this.moveVideoThumb(thumbPath, thumbName, res);
@@ -91,7 +90,7 @@ class VideoController {
         })
         .screenshots({
           count: 1,
-          timestamps: [0.1],
+          timestamps: [0.01],
           folder: `${this.config.relative_temp_path}tmp/videos/thumbs`,
           filename: thumbName,
           size: '113x200',
@@ -117,7 +116,7 @@ class VideoController {
         })
         .screenshots({
           count: 1,
-          timestamps: [0.1],
+          timestamps: [0.01],
           folder: `${this.config.relative_temp_path}tmp/videos/covers`,
           filename: coverName,
           size: '750x1334',
